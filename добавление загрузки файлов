@@ -1,0 +1,46 @@
+from flask import Flask, render_template, request, redirect, url_for, current_app, abort
+import docx
+import os
+app = Flask(__name__)
+
+
+# различные проверки безопасности файла
+# проверка того, что обьем файла не более 1мб
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024
+# допустимые расширения файлов
+app.config['UPLOAD_EXTENSIONS'] = ['.doc', '.docx', '.txt']
+app.config['UPLOAD_PATH'] = 'uploads'
+
+@app.route('/')
+def base():
+    return render_template('base.html')
+
+@app.route('/', methods=['POST'])
+def upload_file():
+    uploaded_file = request.files['file']
+    file = uploaded_file.filename
+
+    if file != '':
+        # С помощью этой логики на любые имена файлов, которые не имеют
+        # одного из утвержденных расширений файлов, будет выдано сообщение об ошибке 400
+        file_ext = os.path.splitext(file)[1]
+        if file_ext not in current_app.config['UPLOAD_EXTENSIONS']:
+            abort(400)
+        else:
+            if str(file).find("doc") != -1:
+                doc = docx.Document(file)
+                text = []
+                for paragraph in doc.paragraphs:
+                    text.append(paragraph.text)
+                print('\n'.join(text))
+            elif str(file).find("txt") != -1:
+                f = open('mom.txt', 'r')
+                print(f.read())
+                f.close()
+
+    return redirect(url_for('base'))
+
+
+
+if __name__ == '__main__':
+    app.run(port=8080, host='127.0.0.1')
